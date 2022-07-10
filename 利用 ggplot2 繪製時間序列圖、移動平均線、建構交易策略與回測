@@ -1,0 +1,7 @@
+#使用R
+#必要套件
+library(ggplot2)
+library(tidyquant)
+tsec<-read.csv("https://query1.finance.yahoo.com/v7/finance/download/%5ETWII?period1=1625926127&period2=1657462127&interval=1d&events=history&includeAdjustedClose=true")
+head(tsec)
+tail(tsec)
