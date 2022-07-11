@@ -1,7 +1,8 @@
-#使用R
+ma#使用R
 #必要套件
 library(ggplot2)
 library(tidyquant)
+#抓取yahoo資料
 tsec<-read.csv("https://query1.finance.yahoo.com/v7/finance/download/%5ETWII?period1=1625926127&period2=1657462127&interval=1d&events=history&includeAdjustedClose=true")
 head(tsec)
 tail(tsec)
@@ -29,3 +30,41 @@ for(i in ma_days:nrow(tsec_data))
 ma_data<-data.frame(date=as.Date(tsec_data$date),ma=ma)
 ma_data<-ma_data[ma_data$ma!=0,]
 ggplot(tsec_data,aes(x=date,y=price))+geom_line(aes(x=date,y=price),color="black")+labs(x="time",y="tsec")+scale_x_date(date_breaks = "1 month",date_labels = c("%b %y"))+geom_line(data=ma_data,aes(x=date,y=ma),color="red",linetype="solid",size=1)+ggtitle("MA with papakao")+scale_y_continuous(breaks=seq(12000,19000,500))
+#副標題(Debugging)
+ggplot(tsec_data,aes(x=date,y=price))+
+  geom_line(aes(x=date,y=price),color="black")+
+  labs(x="time",y="tsec")+
+  scale_x_date(date_breaks = "1 month",date_labels = c("%b %y"))+
+  geom_line(data=ma_data,aes(x=date,y=ma),color="red",linetype="solid",size=1)+
+  ggtitle("MA with papakao")+
+  scale_y_continuous(breaks=seq(12000,19000,500))+
+  scale_color_identity(name="",
+                       breaks=c("black","red"),
+                       labels=c("original",paste0(ma_days,"days MA")),
+                       guide="legend")
+ma_days<-10
+paste0(ma_days,"days MA")
+#內建建MA函數
+gen_ma<-function(ma_days)
+{
+  ma<-array(0,nrow(tsec_data))
+  for(i in ma_days:nrow(tsec_data))
+  {
+   ma[i]<-mean(tsec_data$price[(i-ma_days+1):(i)])
+  }
+  ma_data<-data.frame(date=as.Date(tsec_data$date),ma=ma)
+  ma_data<-ma_data[ma_data$ma !=0,]
+  return(ma_data)
+}
+gen_ma(50)
+ggplot(tsec_data,aes(x=date,y=price))+
+  geom_line()+
+  labs(x="time",y="tsec")+
+  scale_x_date(date_breaks = "1 month",date_labels = c("%b %y"))+
+  geom_line(data=gen_ma(120),aes(x=date,y=ma,color="blue"),size=1)+
+  geom_line(data=gen_ma(60),aes(x=date,y=ma,color="red"),size=1)+
+  geom_line(data=gen_ma(20),aes(x=date,y=ma,color="green"),size=1)+
+  scale_color_identity(name="",
+                       breaks=c("black","blue","red","green"),
+                       labels=c("original","120 days MA","60 days MA","20 days MA"),
+                       guide="legend")
