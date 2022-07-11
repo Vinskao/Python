@@ -5,3 +5,27 @@ library(tidyquant)
 tsec<-read.csv("https://query1.finance.yahoo.com/v7/finance/download/%5ETWII?period1=1625926127&period2=1657462127&interval=1d&events=history&includeAdjustedClose=true")
 head(tsec)
 tail(tsec)
+#處理null
+rowSums(tail(tsec)=="null")
+remove_null<-rowSums(tsec=="null")
+head(remove_null)
+hist(remove_null)
+sum(remove_null==6)
+tsec<-tsec[remove_null==0,]
+#定義data型態
+tsec_data<-data.frame(date=as.Date(tsec$Date),price=as.numeric(as.character(tsec$Adj.Close)))
+head(tsec_data)
+tsec_data<-tsec_data[tsec_data$date>=as.Date("2021-12-31"),]
+#畫圖
+ggplot(tsec_data,aes(x=date,y=price))+geom_line()
+ggplot(tsec_data,aes(x=date,y=price))+geom_line()+labs(x="time",y="tsec")+scale_x_date(date_breaks = "1 month",date_labels = c("%b %y"))
+ggplot(tsec_data,aes(x=date,y=price))+geom_line()+labs(x="time",y="tsec")+scale_x_date(date_breaks = "1 month",date_labels = c("%b %y"))+scale_y_continuous(breaks=seq(12000,19000,500))
+ggplot(tsec_data,aes(x=date,y=price))+geom_line()+labs(x="time",y="tsec")+scale_x_date(date_breaks = "1 month",date_labels = c("%b %y"))+scale_y_continuous(breaks=seq(12000,19000,500))+geom_ma(ma_fun = SMA,n=5,color="red",linetype="solid",size=1)+ggtitle("MA with tidyquant")
+#用for迴圈算ma
+ma_days<-5
+ma<-array(0,nrow(tsec_data))
+for(i in ma_days:nrow(tsec_data))
+{ma[i]<-mean(tsec_data$price[(i-ma_days+1):(i)])}
+ma_data<-data.frame(date=as.Date(tsec_data$date),ma=ma)
+ma_data<-ma_data[ma_data$ma!=0,]
+ggplot(tsec_data,aes(x=date,y=price))+geom_line(aes(x=date,y=price),color="black")+labs(x="time",y="tsec")+scale_x_date(date_breaks = "1 month",date_labels = c("%b %y"))+geom_line(data=ma_data,aes(x=date,y=ma),color="red",linetype="solid",size=1)+ggtitle("MA with papakao")+scale_y_continuous(breaks=seq(12000,19000,500))
